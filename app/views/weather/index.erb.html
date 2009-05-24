@@ -1,0 +1,12 @@
+<h1>Weather</h1>
+
+<% form_tag nil, :method => :get do %>
+<%= text_field_tag 'zip_code', params[:zip_code], :maxlength => 5 %>
+<%= submit_tag "Get weather" %>
+<% end %>
+
+<% if @weather %>
+<h2>Result</h2>
+<%= image_tag @weather_information[:picture_url] %>
+<pre><%= h(@weather.to_yaml) %></pre>
+<% end %>
