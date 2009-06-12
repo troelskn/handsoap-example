@@ -8,7 +8,7 @@ class WeatherService < Handsoap::Service
   end
   # public methods
   def get_city_forecast_by_zip(zip_code)
-    response = invoke("weat:GetCityForecastByZIP") do |message|
+    response = invoke("weat:GetCityForecastByZIP", :soap_action => :none) do |message|
       message.add 'weat:ZIP', zip_code
     end
     node = response.document.xpath('//ns:GetCityForecastByZIPResult', ns).first
@@ -16,7 +16,7 @@ class WeatherService < Handsoap::Service
   end
 
   def get_city_weather_by_zip(zip_code)
-    response = invoke("weat:GetCityWeatherByZIP") do |message|
+    response = invoke("weat:GetCityWeatherByZIP", :soap_action => :none) do |message|
       message.add 'weat:ZIP', zip_code
     end
     node = response.document.xpath('//ns:GetCityWeatherByZIPResult', ns).first
@@ -24,7 +24,7 @@ class WeatherService < Handsoap::Service
   end
 
   def get_weather_information
-    response = invoke("weat:GetWeatherInformation")
+    response = invoke("weat:GetWeatherInformation", :soap_action => :none)
     response.document.xpath('//ns:WeatherDescription', ns).map { |node| parse_weather_description(node) }
   end
 
@@ -40,55 +40,55 @@ class WeatherService < Handsoap::Service
   # helpers
   def parse_weather_description(node)
     {
-      :weather_id => node.xpath('./ns:WeatherID/text()', ns).to_s,
-      :description => node.xpath('./ns:Description/text()', ns).to_s,
-      :picture_url => node.xpath('./ns:PictureURL/text()', ns).to_s
+      :weather_id => xml_to_str(node, './ns:WeatherID/text()'),
+      :description => xml_to_str(node, './ns:Description/text()'),
+      :picture_url => xml_to_str(node, './ns:PictureURL/text()')
     }
   end
 
   def parse_city_forecast_by_zip_result(node)
     {
-      :success => node.xpath('./ns:Success/text()', ns).to_s == "true",
-      :response_text => node.xpath('./ns:ResponseText/text()', ns).to_s,
-      :state => node.xpath('./ns:State/text()', ns).to_s,
-      :city => node.xpath('./ns:City/text()', ns).to_s,
-      :weather_station_city => node.xpath('./ns:WeatherStationCity/text()', ns).to_s,
+      :success => xml_to_bool(node, './ns:Success/text()'),
+      :response_text => xml_to_str(node, './ns:ResponseText/text()'),
+      :state => xml_to_str(node, './ns:State/text()'),
+      :city => xml_to_str(node, './ns:City/text()'),
+      :weather_station_city => xml_to_str(node, './ns:WeatherStationCity/text()'),
       :forecasts => node.xpath('./ns:ForecastResult/ns:Forecast', ns).map { |child| parse_forecast(child) }
     }
   end
 
   def parse_forecast(node)
     {
-      :date => DateTime.strptime(node.xpath('./ns:Date/text()', ns).to_s, '%FT%T'),
-      :weather_id => node.xpath('./ns:WeatherID/text()', ns).to_s,
-      :description => node.xpath('./ns:Description/text()', ns).to_s,
+      :date => xml_to_date(node, './ns:Date/text()'),
+      :weather_id => xml_to_str(node, './ns:WeatherID/text()'),
+      :description => xml_to_str(node, './ns:Description/text()'),
       :temperatures => {
-        :morning_low => node.xpath('./ns:Temperatures/ns:MorningLow/text()', ns).to_s.to_i,
-        :daytime_high => node.xpath('./ns:Temperatures/ns:DaytimeHigh/text()', ns).to_s.to_i
+        :morning_low => xml_to_int(node, './ns:Temperatures/ns:MorningLow/text()'),
+        :daytime_high => xml_to_int(node, './ns:Temperatures/ns:DaytimeHigh/text()')
       },
       :probability_of_precipiation => {
-        :nighttime => node.xpath('./ns:ProbabilityOfPrecipiation/ns:Nighttime/text()', ns).to_s.to_i,
-        :daytime => node.xpath('./ns:ProbabilityOfPrecipiation/ns:Daytime/text()', ns).to_s.to_i
+        :nighttime => xml_to_int(node, './ns:ProbabilityOfPrecipiation/ns:Nighttime/text()'),
+        :daytime => xml_to_int(node, './ns:ProbabilityOfPrecipiation/ns:Daytime/text()')
       }
     }
   end
 
   def parse_city_weather_by_zip_result(node)
     {
-      :success => node.xpath('./ns:Success/text()', ns).to_s == "true",
-      :response_text => node.xpath('./ns:ResponseText/text()', ns).to_s,
-      :state => node.xpath('./ns:State/text()', ns).to_s,
-      :city => node.xpath('./ns:City/text()', ns).to_s,
-      :weather_station_city => node.xpath('./ns:WeatherStationCity/text()', ns).to_s,
-      :weather_id => node.xpath('./ns:WeatherID/text()', ns).to_s,
-      :description => node.xpath('./ns:Description/text()', ns).to_s,
-      :temperature => node.xpath('./ns:Temperature/text()', ns).to_s,
-      :relative_humidity => node.xpath('./ns:RelativeHumidity/text()', ns).to_s,
-      :wind => node.xpath('./ns:Wind/text()', ns).to_s,
-      :pressure => node.xpath('./ns:Pressure/text()', ns).to_s,
-      :visibility => node.xpath('./ns:Visibility/text()', ns).to_s,
-      :wind_chill => node.xpath('./ns:WindChill/text()', ns).to_s,
-      :remarks => node.xpath('./ns:Remarks/text()', ns).to_s,
+      :success => xml_to_bool(node, './ns:Success/text()'),
+      :response_text => xml_to_str(node, './ns:ResponseText/text()'),
+      :state => xml_to_str(node, './ns:State/text()'),
+      :city => xml_to_str(node, './ns:City/text()'),
+      :weather_station_city => xml_to_str(node, './ns:WeatherStationCity/text()'),
+      :weather_id => xml_to_str(node, './ns:WeatherID/text()'),
+      :description => xml_to_str(node, './ns:Description/text()'),
+      :temperature => xml_to_str(node, './ns:Temperature/text()'),
+      :relative_humidity => xml_to_str(node, './ns:RelativeHumidity/text()'),
+      :wind => xml_to_str(node, './ns:Wind/text()'),
+      :pressure => xml_to_str(node, './ns:Pressure/text()'),
+      :visibility => xml_to_str(node, './ns:Visibility/text()'),
+      :wind_chill => xml_to_str(node, './ns:WindChill/text()'),
+      :remarks => xml_to_str(node, './ns:Remarks/text()'),
     }
   end
 
